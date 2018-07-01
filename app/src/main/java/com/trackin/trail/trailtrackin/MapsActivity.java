@@ -13,6 +13,8 @@ import android.provider.Settings;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
+import android.view.View;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -25,6 +27,7 @@ import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 
 import java.util.ArrayList;
+import java.util.Date;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
 
@@ -33,7 +36,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private LocationListener locationListener;
     private ArrayList<LatLng> points;
     private boolean firstPoint=true;
+    private float distance=0;
     Polyline line;
+    private boolean navStart=false;
+    public TextView timerMonitor;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,7 +49,24 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
+        timerMonitor=((TextView)findViewById(R.id.timeWatch));
+        timerMonitor.setText(String.valueOf(0));
     }
+
+ /*   private String timeParser(Long miliSeconds){
+        int finalMili=0;
+        int finalMin=0;
+        int finalHour=0;
+        if(miliSeconds>60){
+
+        }
+    }*/
+    public void beginNavigation(View nav){
+        Toast.makeText(this, "Hello,Text", Toast.LENGTH_SHORT).show();
+        new TimerTask(timerMonitor).execute();
+        navStart=true;
+    }
+
     private void redrawLine(GoogleMap mMap){
 
         mMap.clear();  //clears all Markers and Polylines
@@ -58,6 +81,24 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         line = mMap.addPolyline(options); //add Polyline
     }
 
+    private void changeStartingLocation(LatLng gpsCoordinate){
+        mMap.clear();
+        if(points.size()==0){
+            points.add(gpsCoordinate);
+        }
+        else{
+            points.set(0,gpsCoordinate);
+        }
+
+        mMap.addMarker(new MarkerOptions().position(points.get(0)).title("Start Location"));
+        mMap.moveCamera(CameraUpdateFactory.newLatLng(gpsCoordinate));
+    }
+
+    private void trackingMovement(LatLng gpsCoordinate){
+        points.add(gpsCoordinate);
+        redrawLine(mMap);
+        mMap.moveCamera(CameraUpdateFactory.newLatLng(gpsCoordinate));
+    }
     /**
      * Manipulates the map once available.
      * This callback is triggered when the map is ready to be used.
@@ -78,19 +119,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             @Override
             public void onLocationChanged(Location location) {
                 LatLng gpsCoordinate= new LatLng(location.getLongitude(),location.getLatitude());
-                if(firstPoint){
-                    points.add(gpsCoordinate);
-                    redrawLine(mMap);
-                    mMap.moveCamera(CameraUpdateFactory.newLatLng(gpsCoordinate));
-                    firstPoint=false;
+                if(!navStart){
+                    changeStartingLocation(gpsCoordinate);
                 }
                 else{
                     if(!points.get(points.size()-1).equals(gpsCoordinate)){
-                        points.add(gpsCoordinate);
-                        redrawLine(mMap);
-                        mMap.moveCamera(CameraUpdateFactory.newLatLng(gpsCoordinate));
+                        trackingMovement(gpsCoordinate);
                     }
-
                 }
             }
 
