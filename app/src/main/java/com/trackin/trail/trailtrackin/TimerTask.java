@@ -1,36 +1,32 @@
 package com.trackin.trail.trailtrackin;
 
-import android.content.Context;
 import android.os.AsyncTask;
-import android.view.View;
 import android.widget.TextView;
 
-import org.w3c.dom.Text;
-
-import java.text.DateFormat;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.Date;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 public class TimerTask extends AsyncTask<Void, Long, Void> {
     private Long initialTime=System.currentTimeMillis();
     private Long currentTime=System.currentTimeMillis();
     private TextView timer;
+    private long inputDuration;
+    private long duration=0;
 
-    public TimerTask(TextView timer){
+    public TimerTask(TextView timer,long duration){
         this.timer=timer;
+        inputDuration=duration;
     }
 
 
     @Override
     protected Void doInBackground(Void... voids){
-        long duration=0;
-        while(duration<5184000) {
+        while( !isCancelled()) {
             try {
                 Thread.sleep(5);
                 currentTime = System.currentTimeMillis();
-                duration = currentTime - initialTime;
+                duration = inputDuration+currentTime - initialTime;
                 publishProgress(duration);
             } catch (InterruptedException e) {
                 e.printStackTrace();
@@ -63,6 +59,11 @@ public class TimerTask extends AsyncTask<Void, Long, Void> {
 
 
     }
+
+public long getDuration(){
+        return duration;
+}
+
 
 
 }
